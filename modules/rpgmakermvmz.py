@@ -1,16 +1,9 @@
+# Libraries
+import json, os, re, textwrap, threading, time, traceback, tiktoken, openai
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import json
-import os
 from pathlib import Path
-import re
-import textwrap
-import threading
-import time
-import traceback
-import tiktoken
 from colorama import Fore
 from dotenv import load_dotenv
-import openai
 from retry import retry
 from tqdm import tqdm
 
@@ -24,9 +17,7 @@ openai.api_key = os.getenv('key')
 #Globals
 MODEL = os.getenv('model')
 TIMEOUT = int(os.getenv('timeout'))
-LANGUAGE=os.getenv('language').capitalize()
-INPUTAPICOST = .002 # Depends on the model https://openai.com/pricing
-OUTPUTAPICOST = .002
+LANGUAGE = os.getenv('language').capitalize()
 PROMPT = Path('prompt.txt').read_text(encoding='utf-8')
 THREADS = int(os.getenv('threads')) # Controls how many threads are working on a single file (May have to drop this)
 LOCK = threading.Lock()
@@ -37,18 +28,39 @@ MAXHISTORY = 10
 ESTIMATE = ''
 TOKENS = [0, 0]
 NAMESLIST = []
+NAMES = False    # Output a list of all the character names found
+BRFLAG = False   # If the game uses <br> instead
+FIXTEXTWRAP = True  # Overwrites textwrap
+IGNORETLTEXT = False    # Ignores all translated text.
+
+# Pricing - Depends on the model https://openai.com/pricing
+if 'gpt-3.5' in MODEL:
+    INPUTAPICOST = .002 
+    OUTPUTAPICOST = .002
+elif 'gpt-4' in MODEL:
+    INPUTAPICOST = .01
+    OUTPUTAPICOST = .03
 
 #tqdm Globals
 BAR_FORMAT='{l_bar}{bar:10}{r_bar}{bar:-10b}'
-POSITION=0
-LEAVE=False
+POSITION = 0
+LEAVE = False
 
-# Flags
+# Dialogue / Scroll
 CODE401 = True
 CODE405 = False
+
+# Choices
 CODE102 = True
+CODE408 = False
+
+# Variables
 CODE122 = False
+
+# Names
 CODE101 = False
+
+# Script
 CODE355655 = False
 CODE357 = False
 CODE657 = False
@@ -56,12 +68,7 @@ CODE356 = False
 CODE320 = False
 CODE324 = False
 CODE111 = False
-CODE408 = False
 CODE108 = False
-NAMES = False    # Output a list of all the character names found
-BRFLAG = False   # If the game uses <br> instead
-FIXTEXTWRAP = True
-IGNORETLTEXT = False
 
 def handleMVMZ(filename, estimate):
     global ESTIMATE, TOKENS
