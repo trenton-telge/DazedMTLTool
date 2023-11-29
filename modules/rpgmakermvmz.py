@@ -35,7 +35,7 @@ LISTWIDTH = int(os.getenv('listWidth'))
 NOTEWIDTH = 40
 MAXHISTORY = 10
 ESTIMATE = ''
-totalTokens = [0, 0]
+TOKENS = [0, 0]
 NAMESLIST = []
 
 #tqdm Globals
@@ -64,7 +64,7 @@ FIXTEXTWRAP = True
 IGNORETLTEXT = False
 
 def handleMVMZ(filename, estimate):
-    global ESTIMATE, totalTokens
+    global ESTIMATE, TOKENS
     ESTIMATE = estimate
 
     if estimate:
@@ -77,10 +77,10 @@ def handleMVMZ(filename, estimate):
         if NAMES is True:
             tqdm.write(str(NAMESLIST))
         with LOCK:
-            totalTokens[0] += translatedData[1][0]
-            totalTokens[1] += translatedData[1][1]
+            TOKENS[0] += translatedData[1][0]
+            TOKENS[1] += translatedData[1][1]
 
-        return getResultString(['', totalTokens, None], end - start, 'TOTAL')
+        return getResultString(['', TOKENS, None], end - start, 'TOTAL')
     
     else:
         try:
@@ -93,12 +93,12 @@ def handleMVMZ(filename, estimate):
                 json.dump(translatedData[0], outFile, ensure_ascii=False)
                 tqdm.write(getResultString(translatedData, end - start, filename))
                 with LOCK:
-                    totalTokens[0] += translatedData[1][0]
-                    totalTokens[1] += translatedData[1][1]
+                    TOKENS[0] += translatedData[1][0]
+                    TOKENS[1] += translatedData[1][1]
         except Exception:
             return 'Fail'
 
-    return getResultString(['', totalTokens, None], end - start, 'TOTAL')
+    return getResultString(['', TOKENS, None], end - start, 'TOTAL')
 
 def openFiles(filename):
     with open('files/' + filename, 'r', encoding='utf-8-sig') as f:
@@ -654,7 +654,10 @@ def searchCodes(page, pbar):
                         matchList = re.findall(r'(\\+nc<(.*?)>)(.+)?', finalJAString)    
                         if len(matchList) != 0:    
                             # Translate Speaker  
-                            speaker = getSpeaker(matchList[0][1])
+                            response = getSpeaker(matchList[0][1])
+                            speaker = response[0]
+                            totalTokens[0] += response[1][0]
+                            totalTokens[1] += response[1][1]
 
                             # Set Nametag and Remove from Final String
                             nametag = matchList[0][0].replace(matchList[0][1], speaker)
@@ -672,7 +675,10 @@ def searchCodes(page, pbar):
                         matchList = re.findall(r'([\\]+[nN][wW]\[(.+?)\]+)(.+)', finalJAString)    
                         if len(matchList) != 0:    
                             # Translate Speaker
-                            speaker = getSpeaker(matchList[0][1])
+                            response = getSpeaker(matchList[0][1])
+                            speaker = response[0]
+                            totalTokens[0] += response[1][0]
+                            totalTokens[1] += response[1][1]
 
                             # Set Nametag and Remove from Final String
                             nametag = matchList[0][0].replace(matchList[0][1], speaker)
@@ -694,7 +700,10 @@ def searchCodes(page, pbar):
                                 match1 = matchList[0][3]
 
                             # Translate Speaker
-                            speaker = getSpeaker(match1)
+                            response = getSpeaker(match1)
+                            speaker = response[0]
+                            totalTokens[0] += response[1][0]
+                            totalTokens[1] += response[1][1]
 
                             # Set Nametag and Remove from Final String
                             nametag = match0.replace(match1, speaker)
@@ -1751,10 +1760,7 @@ def getSpeaker(speaker):
         case 'ライト':
             return 'Light'
         case _:
-            response = translateGPT(speaker, 'Reply with only the '+ LANGUAGE +' translation of the NPC name', False)
-            totalTokens[0] += response[1][0]
-            totalTokens[1] += response[1][1]
-            return response[0].strip('.')
+            return translateGPT(speaker, 'Reply with only the '+ LANGUAGE +' translation of the NPC name', False)
 
 def subVars(jaString):
     jaString = jaString.replace('\u3000', ' ')
