@@ -269,21 +269,21 @@ def translateTyrano(data, pbar):
         matchList = re.findall(r"(.+)\[[rpcm]+\]$", data[i])
         if len(matchList) > 0:
             currentGroup.append(matchList[0])
-            data[i] = "\d\n"
+            data[i] = "\\d\n"
             
             # Grab All Lines in a Row
             while len(matchList) > 0 and i + 1 < len(data):                  
                 i += 1
                 # Skip Blank Lines
                 if data[i] == '\n':
-                    data[i] = "\d\n"
+                    data[i] = "\\d\n"
                     continue
                     
                 # Append line to list if match
                 matchList = re.findall(r"(.+)\[[rpcm]+\]$", data[i])
                 if len(matchList) > 0:
                     currentGroup.append(matchList[0])
-                    data[i] = "\d\n"
+                    data[i] = "\\d\n"
 
             # Join up 401 groups for better translation.
             if len(currentGroup) > 0:
@@ -323,7 +323,7 @@ def translateTyrano(data, pbar):
                 if any(t in matchList[l] for t in ['Mr.', 'Ms.', 'Mrs.', '...']):
                     if len(matchList) > l+1:
                         matchList[l] = matchList[l] + ' ' + matchList[l+1]
-                        matchList[l+1] = '\d'
+                        matchList[l+1] = '\\d'
 
             # Delete lines marked for deletion
             finalData = []

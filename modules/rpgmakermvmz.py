@@ -1,5 +1,5 @@
 # Libraries
-import json, os, re, textwrap, threading, time, traceback, tiktoken, openai
+import json, os, re, textwrap, threading, time, traceback, requests, tiktoken
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from colorama import Fore
@@ -9,12 +9,9 @@ from tqdm import tqdm
 
 # Open AI
 load_dotenv()
-if os.getenv('api').replace(' ', '') != '':
-    openai.api_base = os.getenv('api')
-openai.organization = os.getenv('org')
-openai.api_key = os.getenv('key')
 
 #Globals
+API = os.getenv('api')
 MODEL = os.getenv('model')
 TIMEOUT = int(os.getenv('timeout'))
 LANGUAGE = os.getenv('language').capitalize()
@@ -40,6 +37,9 @@ if 'gpt-3.5' in MODEL:
 elif 'gpt-4' in MODEL:
     INPUTAPICOST = .01
     OUTPUTAPICOST = .03
+else:
+    INPUTAPICOST = .002 
+    OUTPUTAPICOST = .002
 
 #tqdm Globals
 BAR_FORMAT='{l_bar}{bar:10}{r_bar}{bar:-10b}'
@@ -787,7 +787,7 @@ def searchCodes(page, pbar):
                         translatedText = response[0]
 
                         # Change added speaker
-                        translatedText = re.sub(r'(^.+?)\s?[|:]\s?', '\g<1>||| ', translatedText)
+                        translatedText = re.sub(r'(^.+?)\s?[|:]\s?', '\\g<1>||| ', translatedText)
 
                         # Sub Vars
                         varResponse = subVars(translatedText)
@@ -1931,28 +1931,20 @@ def translateGPT(t, history, fullPromptFlag):
         user = 'Line to Translate = ' + subbedT
 
     # Create Message List
-    msg = []
-    msg.append({"role": "system", "content": system})
-    msg.append({"role": "user", "content": context})
-    if isinstance(history, list):
-        for line in history:
-            msg.append({"role": "user", "content": line})
-    else:
-        msg.append({"role": "user", "content": history})
-    msg.append({"role": "user", "content": user})
+    msg = {}
+    msg['model'] = MODEL
+    msg['prompt'] = "\"\"\"<|im_start|>system\n" + system + "\n" + context + "\n"
+    msg['stream'] = False
+    msg['prompt'] = msg['prompt'] + "<|im_start|>user\n" + user + "\n<|im_end|>\"\"\""
+    # msg['prompt'] = msg['prompt'].replace("\n", " | ")
 
-    response = openai.ChatCompletion.create(
-        temperature=0,
-        frequency_penalty=0.2,
-        presence_penalty=0.2,
-        model=MODEL,
-        messages=msg,
-        request_timeout=TIMEOUT,
-    )
+    response = requests.post(url=API, json = msg, headers={'Content-Type': 'application/json'})
 
     # Save Translated Text
-    translatedText = response.choices[0].message.content
-    totalTokens = [response.usage.prompt_tokens, response.usage.completion_tokens]
+    resC = response.content
+    resCQ = json.loads(resC)
+    translatedText = resCQ['response']
+    totalTokens = [resCQ['prompt_eval_count'], resCQ['eval_count']]
 
     # Resub Vars
     translatedText = resubVars(translatedText, varResponse[1])
@@ -1968,6 +1960,11 @@ def translateGPT(t, history, fullPromptFlag):
     translatedText = translatedText.replace('Line to Translate =', '')
     translatedText = translatedText.replace('Translation =', '')
     translatedText = translatedText.replace('Translate =', '')
+    translatedText = translatedText.replace('Translation: ', '')
+    translatedText = translatedText.replace('Line Translated = ', '')
+    translatedText = translatedText.replace('Line Translated: ', '')
+    translatedText = translatedText.replace('Line Translation = ', '')
+    translatedText = translatedText.replace('Line Translation: ', '')
     translatedText = translatedText.replace('っ', '')
     translatedText = translatedText.replace('ッ', '')
     translatedText = translatedText.replace('ぁ', '')
@@ -1975,9 +1972,10 @@ def translateGPT(t, history, fullPromptFlag):
     translatedText = translatedText.replace('、', ',')
     translatedText = translatedText.replace('？', '?')
     translatedText = translatedText.replace('！', '!')
-
+    print(subbedT + " -> " + translatedText)
     # Return Translation
     if len(translatedText) > 15 * len(t) or "I'm sorry, but I'm unable to assist with that translation" in translatedText:
+        print("Translation was too long, rejected.")
         raise Exception
     else:
         return [translatedText, totalTokens]

@@ -173,7 +173,7 @@ def translateTyrano(data, pbar):
             currentGroup.append(matchList[0])
             if len(data) > i+1:
                 while '[r]' in data[i+1]:
-                    data[i] = '\d\n'    # \d Marks line for deletion
+                    data[i] = '\\d\n'    # \d Marks line for deletion
                     i += 1
                     matchList = re.findall(r'(.+?)\[r\]', data[i])
                     if len(matchList) > 0:
@@ -181,7 +181,7 @@ def translateTyrano(data, pbar):
                         matchList[0] = matchList[0].replace('」', '')
                         currentGroup.append(matchList[0])
                 while '[pcms]' in data[i+1]:
-                    data[i] = '\d\n'
+                    data[i] = '\\d\n'
                     i += 1
                     matchList = re.findall(r'(.+?)\[pcms\]', data[i])
                     if len(matchList) > 0:
@@ -238,7 +238,7 @@ def translateTyrano(data, pbar):
                 j+=1
                 
             if len(matchList) > 0:
-                data[i] = '\d\n'
+                data[i] = '\\d\n'
                 for line in matchList:
                     # Wordwrap Text
                     if '[r]' not in line:
@@ -320,7 +320,7 @@ def translateTyrano(data, pbar):
                 
             # Set Data
             if len(matchList) > 0:
-                data[i] = '\d\n'
+                data[i] = '\\d\n'
                 for line in matchList:
                     # Wordwrap Text
                     if '[r]' not in line:

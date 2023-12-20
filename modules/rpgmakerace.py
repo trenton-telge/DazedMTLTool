@@ -786,7 +786,7 @@ def searchCodes(page, pbar):
                         translatedText = response[0]
 
                         # Change added speaker
-                        translatedText = re.sub(r'(^.+?)\s?[|:]\s?', '\g<1>: ', translatedText)
+                        translatedText = re.sub(r'(^.+?)\s?[|:]\s?', '\\g<1>: ', translatedText)
 
                         # Sub Vars
                         varResponse = subVars(translatedText)

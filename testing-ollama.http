@@ -1,0 +1,7 @@
+POST http://localhost:11434/api/generate
+
+{
+  "model": "dolphin-mixtral:latest",
+  "prompt": "You are an expert Eroge Game translator and localizer who translates Japanese text to English. You are going to be translating text from a video game. I will give you some lines and you must translate them to the best of your ability. Line to Translate = 相変わらず情けない格好だ。",
+  "stream": false
+}

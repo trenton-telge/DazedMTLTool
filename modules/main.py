@@ -201,7 +201,7 @@ def main():
             deleteFolderFiles('files')
 
         # Prevent immediately closing of CLI
-        tqdm.write(totalCost)
+        # tqdm.write(totalCost)
         # input('Done! Press Enter to close.')
 
 def deleteFolderFiles(folderPath):
